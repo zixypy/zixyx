@@ -12,7 +12,7 @@ elseif gameId == 17625359962 then
             'https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt'
         )
     )()
-elseif gameId == 5993942214 then
+elseif gameId == 5993942214 or gameId == 7113341058 then
     loadstring(
         game:HttpGet(
             'https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt'
