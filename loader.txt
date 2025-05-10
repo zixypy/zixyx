@@ -11,6 +11,7 @@ local games = {
 	{ name = "Rivals", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt" },
 	{ name = "Rush Point", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt" },
 	{ name = "Aimblox", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks4.txt" },
+	{ name = "Airsoft Battles", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks5.txt" },
 }
 
 local holder_stroke = Instance.new("UIStroke")
