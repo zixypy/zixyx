@@ -38,7 +38,7 @@ do
 	title.Position = UDim2.new(0.0361463465, 0, 0.0199999996, 0)
 	title.Size = UDim2.new(0.926784515, 0, 0.112490386, 0)
 	title.Font = Enum.Font.RobotoMono
-	title.Text = "Zixy X"
+	title.Text = "Zixy X (all keys are 1d btw)"
 	title.TextColor3 = Color3.fromRGB(255, 255, 255)
 	title.TextStrokeTransparency = 0.000
 	title.TextWrapped = true
