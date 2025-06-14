@@ -607,7 +607,7 @@ local function applyWeaponExploits()
                 c.Value = 0
             end
             if getgenv().exploits.RapidFire and (c.Name == "FireRate" or c.Name == "BFireRate") then
-                c.Value = 0.05
+                c.Value = 0.02
             end
             if getgenv().exploits.InfiniteAmmo and c.Name == "Ammo" then
                 c.Value = 300
