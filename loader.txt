@@ -118,7 +118,7 @@ do
 
 	for _, supported_game in ipairs(games) do
 		local text_button = Instance.new("TextButton", scrolling_frame)
-		text_button.Text = `load {supported_game.name}`
+		text_button.Text = `Load {supported_game.name}`
 		text_button.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
 		text_button.BorderColor3 = Color3.fromRGB(0, 0, 0)
 		text_button.BorderSizePixel = 0
