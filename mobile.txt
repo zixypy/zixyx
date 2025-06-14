@@ -831,8 +831,6 @@ end)
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
-local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed or not getgenv().aimbot.Enabled then return end
 
@@ -844,9 +842,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 
     if isMobile and input.UserInputType == Enum.UserInputType.Touch then
-        local screenWidth = GuiService:GetScreenResolution().X
+        local screenWidth = game:GetService("GuiService"):GetScreenResolution().X
         local touchX = input.Position.X
-        if touchX >= screenWidth * 0.6 then
+        if touchX > screenWidth * 0.6 then
             local closest = getClosestPlayerForAimbot()
             if closest then
                 getgenv().aimbot.LockedTarget = closest
@@ -863,9 +861,9 @@ UserInputService.InputEnded:Connect(function(input, gameProcessed)
     end
 
     if isMobile and input.UserInputType == Enum.UserInputType.Touch then
-        local screenWidth = GuiService:GetScreenResolution().X
+        local screenWidth = game:GetService("GuiService"):GetScreenResolution().X
         local touchX = input.Position.X
-        if touchX >= screenWidth * 0.6 then
+        if touchX > screenWidth * 0.6 then
             getgenv().aimbot.LockedTarget = nil
         end
     end
