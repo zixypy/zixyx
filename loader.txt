@@ -7,6 +7,7 @@ local core_gui = game:GetService("CoreGui")
 local loader = Instance.new("ScreenGui", core_gui)
 
 local games = {
+	{ name = "Arsenal", link = "https://raw.githubusercontent.com/zixypy/zixyx/main/mobile.txt" },
 	{ name = "Big Paintball 2", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks1.txt" },
 	{ name = "Rivals", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt" },
 	{ name = "Rush Point", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt" },
