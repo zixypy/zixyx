@@ -257,7 +257,7 @@ function ZixyESP:UpdateBox()
             -- Health Text ESP
             if self.State.HealthTextEnabled then
                 local healthPercentage = humanoid.Health / humanoid.MaxHealth
-                esp.HealthText.Text = tostring(math.floor(healthPercentage * 100)) .. "%"
+                esp.HealthText.Text = "Health: " .. tostring(math.floor(healthPercentage * 100)) .. "%"
                 esp.HealthText.Position = Vector2.new(rootPos.X, topPos.Y - 40) -- Above Name ESP
                 esp.HealthText.Visible = true
             else
