@@ -256,7 +256,7 @@ function ZixyESP:UpdateBox()
             local topPos = head and camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0)) or camera:WorldToViewportPoint(targetRoot.Position + Vector3.new(0, 3, 0))
             local bottomPos = camera:WorldToViewportPoint(targetRoot.Position - Vector3.new(0, 3, 0))
             local height = math.abs(topPos.Y - bottomPos.Y)
-            local width = height * 0.7
+            local width = height * 0.6
             local centerPos = Vector2.new(rootPos.X, (topPos.Y + bottomPos.Y) / 2)
             esp.Box.Size = Vector2.new(width, height)
             esp.Box.Position = centerPos - Vector2.new(width / 2, height / 2)
