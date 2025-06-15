@@ -23,7 +23,8 @@ ZixyESP.State = {
     NameEnabled = false,
     DistanceEnabled = false,
     SkeletonEnabled = false,
-    HealthEnabled = false,
+    HealthTextEnabled = false,
+    HealthBarEnabled = false,
     TracerEnabled = false,
     ChamsEnabled = false,
 }
@@ -58,6 +59,9 @@ function ZixyESP:CreateBox(player)
         Box = Drawing.new('Square'),
         Name = Drawing.new('Text'),
         Distance = Drawing.new('Text'),
+        HealthText = Drawing.new('Text'),
+        HealthBarBackground = Drawing.new('Square'),
+        HealthBar = Drawing.new('Square'),
     }
 
     esp.Box.Thickness = 2
@@ -76,6 +80,23 @@ function ZixyESP:CreateBox(player)
     esp.Distance.Outline = true
     esp.Distance.Center = true
     esp.Distance.Visible = false
+
+    esp.HealthText.Size = 16
+    esp.HealthText.Color = Color3.new(1, 1, 1)
+    esp.HealthText.Outline = true
+    esp.HealthText.Center = true
+    esp.HealthText.Visible = false
+
+    esp.HealthBarBackground.Size = Vector2.new(5, 50)
+    esp.HealthBarBackground.Color = Color3.new(0, 0, 0)
+    esp.HealthBarBackground.Filled = true
+    esp.HealthBarBackground.Transparency = 0.5
+    esp.HealthBarBackground.Visible = false
+
+    esp.HealthBar.Size = Vector2.new(5, 50)
+    esp.HealthBar.Color = Color3.new(0, 1, 0)
+    esp.HealthBar.Filled = true
+    esp.HealthBar.Visible = false
 
     return esp
 end
@@ -108,33 +129,6 @@ function ZixyESP:CreateSkeleton(player)
     return skeleton
 end
 
-function ZixyESP:CreateHealth(player)
-    local health = {
-        BarBackground = Drawing.new('Square'),
-        Bar = Drawing.new('Square'),
-        Text = Drawing.new('Text'),
-    }
-
-    health.BarBackground.Size = Vector2.new(50, 5)
-    health.BarBackground.Color = Color3.new(0, 0, 0)
-    health.BarBackground.Filled = true
-    health.BarBackground.Transparency = 0.5
-    health.BarBackground.Visible = false
-
-    health.Bar.Size = Vector2.new(50, 5)
-    health.Bar.Color = Color3.new(0, 1, 0)
-    health.Bar.Filled = true
-    health.Bar.Visible = false
-
-    health.Text.Size = 12
-    health.Text.Color = Color3.new(1, 1, 1)
-    health.Text.Outline = true
-    health.Text.Center = true
-    health.Text.Visible = false
-
-    return health
-end
-
 function ZixyESP:CreateTracer(player)
     local tracer = Drawing.new('Line')
     tracer.Thickness = 2
@@ -161,6 +155,9 @@ function ZixyESP:ClearBox(player)
         self.Caches.BoxCache[player].Box:Remove()
         self.Caches.BoxCache[player].Name:Remove()
         self.Caches.BoxCache[player].Distance:Remove()
+        self.Caches.BoxCache[player].HealthText:Remove()
+        self.Caches.BoxCache[player].HealthBarBackground:Remove()
+        self.Caches.BoxCache[player].HealthBar:Remove()
         self.Caches.BoxCache[player] = nil
     end
 end
@@ -171,15 +168,6 @@ function ZixyESP:ClearSkeleton(player)
             line:Remove()
         end
         self.Caches.SkeletonCache[player] = nil
-    end
-end
-
-function ZixyESP:ClearHealth(player)
-    if self.Caches.HealthCache[player] then
-        self.Caches.HealthCache[player].BarBackground:Remove()
-        self.Caches.HealthCache[player].Bar:Remove()
-        self.Caches.HealthCache[player].Text:Remove()
-        self.Caches.HealthCache[player] = nil
     end
 end
 
@@ -199,7 +187,7 @@ end
 
 -- Update ESP elements
 function ZixyESP:UpdateBox()
-    if not (self.State.BoxEnabled or self.State.NameEnabled or self.State.DistanceEnabled) then
+    if not (self.State.BoxEnabled or self.State.NameEnabled or self.State.DistanceEnabled or self.State.HealthTextEnabled or self.State.HealthBarEnabled) then
         for player, _ in pairs(self.Caches.BoxCache) do
             self:ClearBox(player)
         end
@@ -252,21 +240,55 @@ function ZixyESP:UpdateBox()
             local topPos = head and camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0)) or camera:WorldToViewportPoint(targetRoot.Position + Vector3.new(0, 3, 0))
             local bottomPos = camera:WorldToViewportPoint(targetRoot.Position - Vector3.new(0, 3, 0))
             local height = math.abs(topPos.Y - bottomPos.Y)
-            local width = height * 0.5
+            local width = height * 0.7 -- Increased width multiplier from 0.5 to 0.7
             local centerPos = Vector2.new(rootPos.X, (topPos.Y + bottomPos.Y) / 2)
             esp.Box.Size = Vector2.new(width, height)
             esp.Box.Position = centerPos - Vector2.new(width / 2, height / 2)
             esp.Box.Visible = self.State.BoxEnabled
+
             esp.Name.Text = player.Name
             esp.Name.Position = Vector2.new(rootPos.X, topPos.Y - 20)
             esp.Name.Visible = self.State.NameEnabled
+
             esp.Distance.Text = tostring(math.floor(distance)) .. " studs"
             esp.Distance.Position = Vector2.new(rootPos.X, bottomPos.Y + 5)
             esp.Distance.Visible = self.State.DistanceEnabled
+
+            -- Health Text ESP
+            if self.State.HealthTextEnabled then
+                local healthPercentage = humanoid.Health / humanoid.MaxHealth
+                esp.HealthText.Text = tostring(math.floor(healthPercentage * 100)) .. "%"
+                esp.HealthText.Position = Vector2.new(rootPos.X, topPos.Y - 40) -- Above Name ESP
+                esp.HealthText.Visible = true
+            else
+                esp.HealthText.Visible = false
+            end
+
+            -- Health Bar ESP
+            if self.State.HealthBarEnabled then
+                local healthPercentage = humanoid.Health / humanoid.MaxHealth
+                local barHeight = height
+                local barWidth = 5
+                local barPosX = centerPos.X - (width / 2) - 10 -- To the left of the left line of the box
+                local barPosY = centerPos.Y - (height / 2)
+                esp.HealthBarBackground.Position = Vector2.new(barPosX, barPosY)
+                esp.HealthBarBackground.Size = Vector2.new(barWidth, barHeight)
+                esp.HealthBarBackground.Visible = true
+                esp.HealthBar.Position = Vector2.new(barPosX, barPosY + (barHeight * (1 - healthPercentage)))
+                esp.HealthBar.Size = Vector2.new(barWidth, barHeight * healthPercentage)
+                esp.HealthBar.Color = Color3.new(1 - healthPercentage, healthPercentage, 0)
+                esp.HealthBar.Visible = true
+            else
+                esp.HealthBarBackground.Visible = false
+                esp.HealthBar.Visible = false
+            end
         else
             esp.Box.Visible = false
             esp.Name.Visible = false
             esp.Distance.Visible = false
+            esp.HealthText.Visible = false
+            esp.HealthBarBackground.Visible = false
+            esp.HealthBar.Visible = false
         end
     end
 end
@@ -338,7 +360,16 @@ function ZixyESP:UpdateSkeleton()
             RightFoot = character:FindFirstChild("RightFoot"),
         }
 
-        if not (parts.Head and parts.UpperTorso and parts.LowerTorso and parts.LeftUpperArm and parts.LeftLowerArm and parts.LeftHand and parts.RightUpperArm and parts.RightLowerArm and parts.RightHand and parts.LeftUpperLeg and parts.LeftLowerLeg and parts.LeftFoot and parts.RightUpperLeg and parts.RightLowerLeg and parts.RightFoot) then
+        -- Ensure all required parts are present before drawing skeleton
+        local allPartsPresent = true
+        for _, part in pairs(parts) do
+            if not part then
+                allPartsPresent = false
+                break
+            end
+        end
+
+        if not allPartsPresent then
             self:ClearSkeleton(player)
             continue
         end
@@ -419,74 +450,6 @@ function ZixyESP:UpdateSkeleton()
         skeleton.RightLowerLegToRightFoot.From = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
         skeleton.RightLowerLegToRightFoot.To = Vector2.new(rightFootPos.X, rightFootPos.Y)
         skeleton.RightLowerLegToRightFoot.Visible = rightLowerLegOnScreen and rightFootOnScreen and self.State.SkeletonEnabled
-    end
-end
-
-function ZixyESP:UpdateHealth()
-    if not self.State.HealthEnabled then
-        for player, _ in pairs(self.Caches.HealthCache) do
-            self:ClearHealth(player)
-        end
-        return
-    end
-
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild('HumanoidRootPart') then
-        for player, _ in pairs(self.Caches.HealthCache) do
-            self:ClearHealth(player)
-        end
-        return
-    end
-
-    local localRoot = LocalPlayer.Character.HumanoidRootPart
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player == LocalPlayer then continue end
-
-        if not player.Character or not player.Character:FindFirstChild('HumanoidRootPart') or not player.Character:FindFirstChild('Humanoid') then
-            self:ClearHealth(player)
-            continue
-        end
-
-        local character = player.Character
-        local humanoid = character.Humanoid
-        if humanoid.Health <= 0 then
-            self:ClearHealth(player)
-            continue
-        end
-
-        local targetRoot = character.HumanoidRootPart
-        local distance = (localRoot.Position - targetRoot.Position).Magnitude
-        if distance > self.Config.ESPDistance then
-            self:ClearHealth(player)
-            continue
-        end
-
-        if self.Config.TeamCheck and LocalPlayer.Team and player.Team == LocalPlayer.Team then
-            self:ClearHealth(player)
-            continue
-        end
-
-        if not self.Caches.HealthCache[player] then
-            self.Caches.HealthCache[player] = self:CreateHealth(player)
-        end
-
-        local health = self.Caches.HealthCache[player]
-        local headPos, onScreen = camera:WorldToViewportPoint(targetRoot.Position - Vector3.new(0, 3, 0))
-        if onScreen then
-            local healthPercentage = humanoid.Health / humanoid.MaxHealth
-            health.BarBackground.Position = Vector2.new(headPos.X - 25, headPos.Y - 30)
-            health.BarBackground.Visible = true
-            health.Bar.Size = Vector2.new(50 * healthPercentage, 5)
-            health.Bar.Position = Vector2.new(headPos.X - 25, headPos.Y - 30)
-            health.Bar.Color = Color3.new(1 - healthPercentage, healthPercentage, 0)
-            health.Bar.Visible = true
-            health.Text.Text = tostring(math.floor(healthPercentage * 100)) .. "%"
-            health.Text.Position = Vector2.new(headPos.X, headPos.Y - 45)
-            health.Text.Visible = true
-        else
-            health.BarBackground.Visible = false
-            health.Bar.Visible = false
-            health.Text.Visible = false
-        end
     end
 end
 
@@ -640,8 +603,12 @@ function ZixyESP:InitiateSkeleton(color)
     end
 end
 
-function ZixyESP:InitiateHealth(enabled)
-    self.State.HealthEnabled = enabled or true
+function ZixyESP:InitiateHealthText(enabled)
+    self.State.HealthTextEnabled = enabled or true
+end
+
+function ZixyESP:InitiateHealthBar(enabled)
+    self.State.HealthBarEnabled = enabled or true
 end
 
 function ZixyESP:InitiateTracer(color, origin)
@@ -682,9 +649,6 @@ function ZixyESP:Cleanup()
     for player, _ in pairs(self.Caches.SkeletonCache) do
         self:ClearSkeleton(player)
     end
-    for player, _ in pairs(self.Caches.HealthCache) do
-        self:ClearHealth(player)
-    end
     for player, _ in pairs(self.Caches.TracerCache) do
         self:ClearTracer(player)
     end
@@ -705,7 +669,8 @@ function ZixyESP:Destroy()
     self.State.NameEnabled = false
     self.State.DistanceEnabled = false
     self.State.SkeletonEnabled = false
-    self.State.HealthEnabled = false
+    self.State.HealthTextEnabled = false
+    self.State.HealthBarEnabled = false
     self.State.TracerEnabled = false
     self.State.ChamsEnabled = false
 end
@@ -717,7 +682,6 @@ function ZixyESP:Initialize()
         SafeExecute(function()
             self:ClearBox(player)
             self:ClearSkeleton(player)
-            self:ClearHealth(player)
             self:ClearTracer(player)
             self:ClearChams(player)
         end)
@@ -730,7 +694,6 @@ function ZixyESP:Initialize()
                     SafeExecute(function()
                         self:ClearBox(player)
                         self:ClearSkeleton(player)
-                        self:ClearHealth(player)
                         self:ClearTracer(player)
                         self:ClearChams(player)
                     end)
@@ -742,7 +705,6 @@ function ZixyESP:Initialize()
                     SafeExecute(function()
                         self:ClearBox(player)
                         self:ClearSkeleton(player)
-                        self:ClearHealth(player)
                         self:ClearTracer(player)
                         self:ClearChams(player)
                     end)
@@ -764,7 +726,6 @@ function ZixyESP:Initialize()
     updateConnection = RunService.RenderStepped:Connect(function()
         SafeExecute(function() self:UpdateBox() end)
         SafeExecute(function() self:UpdateSkeleton() end)
-        SafeExecute(function() self:UpdateHealth() end)
         SafeExecute(function() self:UpdateTracer() end)
         SafeExecute(function() self:UpdateChams() end)
     end)
