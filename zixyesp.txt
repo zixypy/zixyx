@@ -257,7 +257,7 @@ function ZixyESP:UpdateBox()
             -- Health Text ESP
             if self.State.HealthTextEnabled then
                 local healthPercentage = humanoid.Health / humanoid.MaxHealth
-                esp.HealthText.Text = "Health: " .. tostring(math.floor(healthPercentage * 100)) .. "%"
+                esp.HealthText.Text = tostring(math.floor(healthPercentage * 100)) .. "%"
                 esp.HealthText.Position = Vector2.new(rootPos.X, topPos.Y - 40) -- Above Name ESP
                 esp.HealthText.Visible = true
             else
@@ -341,197 +341,115 @@ function ZixyESP:UpdateSkeleton()
         end
 
         local skeleton = self.Caches.SkeletonCache[player]
-        local rigType = humanoid.RigType
-        local parts = {}
+        local parts = {
+            Head = character:FindFirstChild("Head"),
+            Neck = character:FindFirstChild("Neck") or character:FindFirstChild("Head"),
+            UpperTorso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso"),
+            LowerTorso = character:FindFirstChild("LowerTorso") or character:FindFirstChild("HumanoidRootPart"),
+            LeftUpperArm = character:FindFirstChild("LeftUpperArm"),
+            LeftLowerArm = character:FindFirstChild("LeftLowerArm"),
+            LeftHand = character:FindFirstChild("LeftHand"),
+            RightUpperArm = character:FindFirstChild("RightUpperArm"),
+            RightLowerArm = character:FindFirstChild("RightLowerArm"),
+            RightHand = character:FindFirstChild("RightHand"),
+            LeftUpperLeg = character:FindFirstChild("LeftUpperLeg"),
+            LeftLowerLeg = character:FindFirstChild("LeftLowerLeg"),
+            LeftFoot = character:FindFirstChild("LeftFoot"),
+            RightUpperLeg = character:FindFirstChild("RightUpperLeg"),
+            RightLowerLeg = character:FindFirstChild("RightLowerLeg"),
+            RightFoot = character:FindFirstChild("RightFoot"),
+        }
 
-        -- Determine parts based on rig type
-        if rigType == Enum.HumanoidRigType.R15 then
-            parts = {
-                Head = character:FindFirstChild("Head"),
-                Neck = character:FindFirstChild("Neck") or character:FindFirstChild("Head"),
-                UpperTorso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso"),
-                LowerTorso = character:FindFirstChild("LowerTorso") or character:FindFirstChild("HumanoidRootPart"),
-                LeftUpperArm = character:FindFirstChild("LeftUpperArm"),
-                LeftLowerArm = character:FindFirstChild("LeftLowerArm"),
-                LeftHand = character:FindFirstChild("LeftHand"),
-                RightUpperArm = character:FindFirstChild("RightUpperArm"),
-                RightLowerArm = character:FindFirstChild("RightLowerArm"),
-                RightHand = character:FindFirstChild("RightHand"),
-                LeftUpperLeg = character:FindFirstChild("LeftUpperLeg"),
-                LeftLowerLeg = character:FindFirstChild("LeftLowerLeg"),
-                LeftFoot = character:FindFirstChild("LeftFoot"),
-                RightUpperLeg = character:FindFirstChild("RightUpperLeg"),
-                RightLowerLeg = character:FindFirstChild("RightLowerLeg"),
-                RightFoot = character:FindFirstChild("RightFoot"),
-            }
-        elseif rigType == Enum.HumanoidRigType.R6 then
-            parts = {
-                Head = character:FindFirstChild("Head"),
-                Neck = character:FindFirstChild("Head"), -- No distinct neck in R6
-                UpperTorso = character:FindFirstChild("Torso"),
-                LowerTorso = character:FindFirstChild("Torso"), -- No distinct lower torso in R6
-                LeftUpperArm = character:FindFirstChild("LeftArm"),
-                LeftLowerArm = character:FindFirstChild("LeftArm"), -- No distinct lower arm in R6
-                LeftHand = character:FindFirstChild("LeftArm"), -- Hand approximated by arm
-                RightUpperArm = character:FindFirstChild("RightArm"),
-                RightLowerArm = character:FindFirstChild("RightArm"), -- No distinct lower arm in R6
-                RightHand = character:FindFirstChild("RightArm"), -- Hand approximated by arm
-                LeftUpperLeg = character:FindFirstChild("LeftLeg"),
-                LeftLowerLeg = character:FindFirstChild("LeftLeg"), -- No distinct lower leg in R6
-                LeftFoot = character:FindFirstChild("LeftLeg"), -- Foot approximated by leg
-                RightUpperLeg = character:FindFirstChild("RightLeg"),
-                RightLowerLeg = character:FindFirstChild("RightLeg"), -- No distinct lower leg in R6
-                RightFoot = character:FindFirstChild("RightLeg"), -- Foot approximated by leg
-            }
-        else
+        -- Ensure all required parts are present before drawing skeleton
+        local allPartsPresent = true
+        for _, part in pairs(parts) do
+            if not part then
+                allPartsPresent = false
+                break
+            end
+        end
+
+        if not allPartsPresent then
             self:ClearSkeleton(player)
             continue
         end
 
-        -- Ensure at least core parts are present
-        if not (parts.Head and parts.UpperTorso and parts.LowerTorso) then
-            self:ClearSkeleton(player)
-            continue
-        end
+        local headPos, headOnScreen = camera:WorldToViewportPoint(parts.Head.Position)
+        local neckPos, neckOnScreen = camera:WorldToViewportPoint(parts.Neck.Position)
+        local upperTorsoPos, upperTorsoOnScreen = camera:WorldToViewportPoint(parts.UpperTorso.Position)
+        local lowerTorsoPos, lowerTorsoOnScreen = camera:WorldToViewportPoint(parts.LowerTorso.Position)
+        local leftUpperArmPos, leftUpperArmOnScreen = camera:WorldToViewportPoint(parts.LeftUpperArm.Position)
+        local leftLowerArmPos, leftLowerArmOnScreen = camera:WorldToViewportPoint(parts.LeftLowerArm.Position)
+        local leftHandPos, leftHandOnScreen = camera:WorldToViewportPoint(parts.LeftHand.Position)
+        local rightUpperArmPos, rightUpperArmOnScreen = camera:WorldToViewportPoint(parts.RightUpperArm.Position)
+        local rightLowerArmPos, rightLowerArmOnScreen = camera:WorldToViewportPoint(parts.RightLowerArm.Position)
+        local rightHandPos, rightHandOnScreen = camera:WorldToViewportPoint(parts.RightHand.Position)
+        local leftUpperLegPos, leftUpperLegOnScreen = camera:WorldToViewportPoint(parts.LeftUpperLeg.Position)
+        local leftLowerLegPos, leftLowerLegOnScreen = camera:WorldToViewportPoint(parts.LeftLowerLeg.Position)
+        local leftFootPos, leftFootOnScreen = camera:WorldToViewportPoint(parts.LeftFoot.Position)
+        local rightUpperLegPos, rightUpperLegOnScreen = camera:WorldToViewportPoint(parts.RightUpperLeg.Position)
+        local rightLowerLegPos, rightLowerLegOnScreen = camera:WorldToViewportPoint(parts.RightLowerLeg.Position)
+        local rightFootPos, rightFootOnScreen = camera:WorldToViewportPoint(parts.RightFoot.Position)
 
-        -- Get viewport points with nil checks
-        local headPos, headOnScreen = parts.Head and camera:WorldToViewportPoint(parts.Head.Position) or nil
-        local neckPos, neckOnScreen = parts.Neck and camera:WorldToViewportPoint(parts.Neck.Position) or headPos
-        local upperTorsoPos, upperTorsoOnScreen = parts.UpperTorso and camera:WorldToViewportPoint(parts.UpperTorso.Position) or nil
-        local lowerTorsoPos, lowerTorsoOnScreen = parts.LowerTorso and camera:WorldToViewportPoint(parts.LowerTorso.Position) or upperTorsoPos
-        local leftUpperArmPos, leftUpperArmOnScreen = parts.LeftUpperArm and camera:WorldToViewportPoint(parts.LeftUpperArm.Position) or nil
-        local leftLowerArmPos, leftLowerArmOnScreen = parts.LeftLowerArm and camera:WorldToViewportPoint(parts.LeftLowerArm.Position) or leftUpperArmPos
-        local leftHandPos, leftHandOnScreen = parts.LeftHand and camera:WorldToViewportPoint(parts.LeftHand.Position) or leftLowerArmPos
-        local rightUpperArmPos, rightUpperArmOnScreen = parts.RightUpperArm and camera:WorldToViewportPoint(parts.RightUpperArm.Position) or nil
-        local rightLowerArmPos, rightLowerArmOnScreen = parts.RightLowerArm and camera:WorldToViewportPoint(parts.RightLowerArm.Position) or rightUpperArmPos
-        local rightHandPos, rightHandOnScreen = parts.RightHand and camera:WorldToViewportPoint(parts.RightHand.Position) or rightLowerArmPos
-        local leftUpperLegPos, leftUpperLegOnScreen = parts.LeftUpperLeg and camera:WorldToViewportPoint(parts.LeftUpperLeg.Position) or nil
-        local leftLowerLegPos, leftLowerLegOnScreen = parts.LeftLowerArm and camera:WorldToViewportPoint(parts.LeftLowerLeg.Position) or leftUpperLegPos
-        local leftFootPos, leftFootOnScreen = parts.LeftFoot and camera:WorldToViewportPoint(parts.LeftFoot.Position) or leftLowerLegPos
-        local rightUpperLegPos, rightUpperLegOnScreen = parts.RightUpperLeg and camera:WorldToViewportPoint(parts.RightUpperLeg.Position) or nil
-        local rightLowerLegPos, rightLowerLegOnScreen = parts.RightLowerLeg and camera:WorldToViewportPoint(parts.RightLowerLeg.Position) or rightUpperLegPos
-        local rightFootPos, rightFootOnScreen = parts.RightFoot and camera:WorldToViewportPoint(parts.RightFoot.Position) or rightLowerLegPos
+        skeleton.HeadToNeck.From = Vector2.new(headPos.X, headPos.Y)
+        skeleton.HeadToNeck.To = Vector2.new(neckPos.X, neckPos.Y)
+        skeleton.HeadToNeck.Visible = headOnScreen and neckOnScreen and self.State.SkeletonEnabled
 
-        -- Draw skeleton lines with nil checks
-        if headPos and neckPos and headOnScreen and neckOnScreen then
-            skeleton.HeadToNeck.From = Vector2.new(headPos.X, headPos.Y)
-            skeleton.HeadToNeck.To = Vector2.new(neckPos.X, neckPos.Y)
-            skeleton.HeadToNeck.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.HeadToNeck.Visible = false
-        end
+        skeleton.NeckToUpperTorso.From = Vector2.new(neckPos.X, neckPos.Y)
+        skeleton.NeckToUpperTorso.To = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
+        skeleton.NeckToUpperTorso.Visible = neckOnScreen and upperTorsoOnScreen and self.State.SkeletonEnabled
 
-        if neckPos and upperTorsoPos and neckOnScreen and upperTorsoOnScreen then
-            skeleton.NeckToUpperTorso.From = Vector2.new(neckPos.X, neckPos.Y)
-            skeleton.NeckToUpperTorso.To = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
-            skeleton.NeckToUpperTorso.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.NeckToUpperTorso.Visible = false
-        end
+        skeleton.UpperTorsoToLowerTorso.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
+        skeleton.UpperTorsoToLowerTorso.To = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
+        skeleton.UpperTorsoToLowerTorso.Visible = upperTorsoOnScreen and lowerTorsoOnScreen and self.State.SkeletonEnabled
 
-        if upperTorsoPos and lowerTorsoPos and upperTorsoOnScreen and lowerTorsoOnScreen then
-            skeleton.UpperTorsoToLowerTorso.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
-            skeleton.UpperTorsoToLowerTorso.To = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
-            skeleton.UpperTorsoToLowerTorso.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.UpperTorsoToLowerTorso.Visible = false
-        end
+        skeleton.UpperTorsoToLeftUpperArm.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
+        skeleton.UpperTorsoToLeftUpperArm.To = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
+        skeleton.UpperTorsoToLeftUpperArm.Visible = upperTorsoOnScreen and leftUpperArmOnScreen and self.State.SkeletonEnabled
 
-        if upperTorsoPos and leftUpperArmPos and upperTorsoOnScreen and leftUpperArmOnScreen then
-            skeleton.UpperTorsoToLeftUpperArm.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
-            skeleton.UpperTorsoToLeftUpperArm.To = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
-            skeleton.UpperTorsoToLeftUpperArm.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.UpperTorsoToLeftUpperArm.Visible = false
-        end
+        skeleton.LeftUpperArmToLeftLowerArm.From = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
+        skeleton.LeftUpperArmToLeftLowerArm.To = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
+        skeleton.LeftUpperArmToLeftLowerArm.Visible = leftUpperArmOnScreen and leftLowerArmOnScreen and self.State.SkeletonEnabled
 
-        if leftUpperArmPos and leftLowerArmPos and leftUpperArmOnScreen and leftLowerArmOnScreen then
-            skeleton.LeftUpperArmToLeftLowerArm.From = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
-            skeleton.LeftUpperArmToLeftLowerArm.To = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
-            skeleton.LeftUpperArmToLeftLowerArm.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LeftUpperArmToLeftLowerArm.Visible = false
-        end
+        skeleton.LeftLowerArmToLeftHand.From = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
+        skeleton.LeftLowerArmToLeftHand.To = Vector2.new(leftHandPos.X, leftHandPos.Y)
+        skeleton.LeftLowerArmToLeftHand.Visible = leftLowerArmOnScreen and leftHandOnScreen and self.State.SkeletonEnabled
 
-        if leftLowerArmPos and leftHandPos and leftLowerArmOnScreen and leftHandOnScreen then
-            skeleton.LeftLowerArmToLeftHand.From = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
-            skeleton.LeftLowerArmToLeftHand.To = Vector2.new(leftHandPos.X, leftHandPos.Y)
-            skeleton.LeftLowerArmToLeftHand.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LeftLowerArmToLeftHand.Visible = false
-        end
+        skeleton.UpperTorsoToRightUpperArm.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
+        skeleton.UpperTorsoToRightUpperArm.To = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
+        skeleton.UpperTorsoToRightUpperArm.Visible = upperTorsoOnScreen and rightUpperArmOnScreen and self.State.SkeletonEnabled
 
-        if upperTorsoPos and rightUpperArmPos and upperTorsoOnScreen and rightUpperArmOnScreen then
-            skeleton.UpperTorsoToRightUpperArm.From = Vector2.new(upperTorsoPos.X, upperTorsoPos.Y)
-            skeleton.UpperTorsoToRightUpperArm.To = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
-            skeleton.UpperTorsoToRightUpperArm.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.UpperTorsoToRightUpperArm.Visible = false
-        end
+        skeleton.RightUpperArmToRightLowerArm.From = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
+        skeleton.RightUpperArmToRightLowerArm.To = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
+        skeleton.RightUpperArmToRightLowerArm.Visible = rightUpperArmOnScreen and rightLowerArmOnScreen and self.State.SkeletonEnabled
 
-        if rightUpperArmPos and rightLowerArmPos and rightUpperArmOnScreen and rightLowerArmOnScreen then
-            skeleton.RightUpperArmToRightLowerArm.From = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
-            skeleton.RightUpperArmToRightLowerArm.To = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
-            skeleton.RightUpperArmToRightLowerArm.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.RightUpperArmToRightLowerArm.Visible = false
-        end
+        skeleton.RightLowerArmToRightHand.From = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
+        skeleton.RightLowerArmToRightHand.To = Vector2.new(rightHandPos.X, rightHandPos.Y)
+        skeleton.RightLowerArmToRightHand.Visible = rightLowerArmOnScreen and rightHandOnScreen and self.State.SkeletonEnabled
 
-        if rightLowerArmPos and rightHandPos and rightLowerArmOnScreen and rightHandOnScreen then
-            skeleton.RightLowerArmToRightHand.From = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
-            skeleton.RightLowerArmToRightHand.To = Vector2.new(rightHandPos.X, rightHandPos.Y)
-            skeleton.RightLowerArmToRightHand.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.RightLowerArmToRightHand.Visible = false
-        end
+        skeleton.LowerTorsoToLeftUpperLeg.From = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
+        skeleton.LowerTorsoToLeftUpperLeg.To = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
+        skeleton.LowerTorsoToLeftUpperLeg.Visible = lowerTorsoOnScreen and leftUpperLegOnScreen and self.State.SkeletonEnabled
 
-        if lowerTorsoPos and leftUpperLegPos and lowerTorsoOnScreen and leftUpperLegOnScreen then
-            skeleton.LowerTorsoToLeftUpperLeg.From = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
-            skeleton.LowerTorsoToLeftUpperLeg.To = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
-            skeleton.LowerTorsoToLeftUpperLeg.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LowerTorsoToLeftUpperLeg.Visible = false
-        end
+        skeleton.LeftUpperLegToLeftLowerLeg.From = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
+        skeleton.LeftUpperLegToLeftLowerLeg.To = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
+        skeleton.LeftUpperLegToLeftLowerLeg.Visible = leftUpperLegOnScreen and leftLowerLegOnScreen and self.State.SkeletonEnabled
 
-        if leftUpperLegPos and leftLowerLegPos and leftUpperLegOnScreen and leftLowerLegOnScreen then
-            skeleton.LeftUpperLegToLeftLowerLeg.From = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
-            skeleton.LeftUpperLegToLeftLowerLeg.To = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
-            skeleton.LeftUpperLegToLeftLowerLeg.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LeftUpperLegToLeftLowerLeg.Visible = false
-        end
+        skeleton.LeftLowerLegToLeftFoot.From = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
+        skeleton.LeftLowerLegToLeftFoot.To = Vector2.new(leftFootPos.X, leftFootPos.Y)
+        skeleton.LeftLowerLegToLeftFoot.Visible = leftLowerLegOnScreen and leftFootOnScreen and self.State.SkeletonEnabled
 
-        if leftLowerLegPos and leftFootPos and leftLowerLegOnScreen and leftFootOnScreen then
-            skeleton.LeftLowerLegToLeftFoot.From = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
-            skeleton.LeftLowerLegToLeftFoot.To = Vector2.new(leftFootPos.X, leftFootPos.Y)
-            skeleton.LeftLowerLegToLeftFoot.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LeftLowerLegToLeftFoot.Visible = false
-        end
+        skeleton.LowerTorsoToRightUpperLeg.From = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
+        skeleton.LowerTorsoToRightUpperLeg.To = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
+        skeleton.LowerTorsoToRightUpperLeg.Visible = lowerTorsoOnScreen and rightUpperLegOnScreen and self.State.SkeletonEnabled
 
-        if lowerTorsoPos and rightUpperLegPos and lowerTorsoOnScreen and rightUpperLegOnScreen then
-            skeleton.LowerTorsoToRightUpperLeg.From = Vector2.new(lowerTorsoPos.X, lowerTorsoPos.Y)
-            skeleton.LowerTorsoToRightUpperLeg.To = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
-            skeleton.LowerTorsoToRightUpperLeg.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.LowerTorsoToRightUpperLeg.Visible = false
-        end
+        skeleton.RightUpperLegToRightLowerLeg.From = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
+        skeleton.RightUpperLegToRightLowerLeg.To = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
+        skeleton.RightUpperLegToRightLowerLeg.Visible = rightUpperLegOnScreen and rightLowerLegOnScreen and self.State.SkeletonEnabled
 
-        if rightUpperLegPos and rightLowerLegPos and rightUpperLegOnScreen and rightLowerLegOnScreen then
-            skeleton.RightUpperLegToRightLowerLeg.From = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
-            skeleton.RightUpperLegToRightLowerLeg.To = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
-            skeleton.RightUpperLegToRightLowerLeg.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.RightUpperLegToRightLowerLeg.Visible = false
-        end
-
-        if rightLowerLegPos and rightFootPos and rightLowerLegOnScreen and rightFootOnScreen then
-            skeleton.RightLowerLegToRightFoot.From = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
-            skeleton.RightLowerLegToRightFoot.To = Vector2.new(rightFootPos.X, rightFootPos.Y)
-            skeleton.RightLowerLegToRightFoot.Visible = self.State.SkeletonEnabled
-        else
-            skeleton.RightLowerLegToRightFoot.Visible = false
-        end
+        skeleton.RightLowerLegToRightFoot.From = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
+        skeleton.RightLowerLegToRightFoot.To = Vector2.new(rightFootPos.X, rightFootPos.Y)
+        skeleton.RightLowerLegToRightFoot.Visible = rightLowerLegOnScreen and rightFootOnScreen and self.State.SkeletonEnabled
     end
 end
 
