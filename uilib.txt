@@ -183,7 +183,7 @@ function ZixyUILib:CreateTab(tabName)
     tabFrame.Size = UDim2.new(1, 0, 1, -self.Config.TabHeight)
     tabFrame.Position = UDim2.new(0, 0, 0, self.Config.TabHeight)
     tabFrame.BackgroundTransparency = 1
-    tabFrame.Visible = self.State.CurrentTab == nil and tabIndex == 1
+    tabFrame.Visible = false -- Default to hidden
     tabFrame.ZIndex = 1001
     tabFrame.Parent = self.Caches.Frame
 
@@ -192,19 +192,22 @@ function ZixyUILib:CreateTab(tabName)
 
     if tabIndex == 1 then
         self.State.CurrentTab = tabName
+        tabFrame.Visible = true
         tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
     end
 
     tabButton.MouseButton1Click:Connect(function()
-        self.State.CurrentTab = tabName
-        for _, frame in pairs(self.Caches.Tabs) do
-            frame.Visible = false
+        if self.State.CurrentTab ~= tabName then
+            self.State.CurrentTab = tabName
+            for _, frame in pairs(self.Caches.Tabs) do
+                frame.Visible = false
+            end
+            tabFrame.Visible = true
+            for _, btn in pairs(self.Caches.TabButtons) do
+                btn.BackgroundColor3 = self.Config.ButtonColor
+            end
+            tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
         end
-        tabFrame.Visible = true
-        for _, btn in pairs(self.Caches.TabButtons) do
-            btn.BackgroundColor3 = self.Config.ButtonColor
-        end
-        tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
     end)
 
     return tabFrame
