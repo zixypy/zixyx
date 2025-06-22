@@ -19,17 +19,19 @@ ZixyUILib.Config = {
     ButtonSize = UDim2.new(0, 120, 0, 40),
     TextSize = UDim2.new(0, 120, 0, 30),
     ScrollBarThickness = 5,
+    ButtonSpacing = 10, -- New: Spacing between buttons
 }
 
 ZixyUILib.State = {
     IsOpen = false,
-    CurrentTab = nil,
+    CurrentTab = "Main", -- Default to "Main" tab
 }
 
 ZixyUILib.Caches = {
     Tabs = {},
     TabButtons = {},
     Elements = {},
+    ButtonYPos = 10, -- Starting Y position for buttons
 }
 
 local player = Players.LocalPlayer
@@ -46,6 +48,7 @@ function ZixyUILib.new()
     self.Caches.Tabs = {}
     self.Caches.TabButtons = {}
     self.Caches.Elements = {}
+    self.Caches.ButtonYPos = self.Config.TabHeight + 10 -- Start below tab height
     return self
 end
 
@@ -162,66 +165,49 @@ function ZixyUILib:CreateWindow(title)
         end
     end)
 
+    -- Create default "Main" tab
+    self:CreateTab("Main")
+
     return self
 end
 
 function ZixyUILib:CreateTab(tabName)
-    local tabButton = Instance.new("TextButton")
-    local tabIndex = #self.Caches.Tabs + 1
-    tabButton.Size = UDim2.new(0, 58, 0, self.Config.TabHeight)
-    tabButton.Position = UDim2.new(0, (tabIndex-1)*58, 0, 0)
-    tabButton.Text = tabName
-    tabButton.BackgroundColor3 = self.Config.ButtonColor
-    tabButton.TextColor3 = self.Config.TextColor
-    tabButton.Font = self.Config.Font
-    tabButton.TextSize = 14
-    tabButton.ZIndex = 1002
-    tabButton.Parent = self.Caches.TabContainer
-    addUICorner(tabButton)
+    if self.State.CurrentTab and self.State.CurrentTab ~= "Main" then
+        warn("Only 'Main' tab is supported. Ignoring additional tab creation.")
+        return self.Caches.Tabs["Main"]
+    end
 
-    local tabFrame = Instance.new("Frame")
-    tabFrame.Size = UDim2.new(1, 0, 1, -self.Config.TabHeight)
-    tabFrame.Position = UDim2.new(0, 0, 0, self.Config.TabHeight)
-    tabFrame.BackgroundTransparency = 1
-    tabFrame.Visible = false -- Default to hidden
-    tabFrame.ZIndex = 1001
-    tabFrame.Parent = self.Caches.Frame
+    if not self.Caches.Tabs[tabName] then
+        local tabButton = Instance.new("TextButton")
+        tabButton.Size = UDim2.new(0, 58, 0, self.Config.TabHeight)
+        tabButton.Position = UDim2.new(0, 0, 0, 0) -- Single tab, no need for offset
+        tabButton.Text = tabName
+        tabButton.BackgroundColor3 = self.Config.ActiveButtonColor -- Always active for single tab
+        tabButton.TextColor3 = self.Config.TextColor
+        tabButton.Font = self.Config.Font
+        tabButton.TextSize = 14
+        tabButton.ZIndex = 1002
+        tabButton.Parent = self.Caches.TabContainer
+        addUICorner(tabButton)
 
-    self.Caches.Tabs[tabName] = tabFrame
-    self.Caches.TabButtons[tabName] = tabButton
+        local tabFrame = Instance.new("Frame")
+        tabFrame.Size = UDim2.new(1, 0, 1, -self.Config.TabHeight)
+        tabFrame.Position = UDim2.new(0, 0, 0, self.Config.TabHeight)
+        tabFrame.BackgroundTransparency = 1
+        tabFrame.Visible = true -- Always visible for single tab
+        tabFrame.ZIndex = 1001
+        tabFrame.Parent = self.Caches.Frame
 
-    -- Initialize the first tab if none is selected
-    if not self.State.CurrentTab then
+        self.Caches.Tabs[tabName] = tabFrame
+        self.Caches.TabButtons[tabName] = tabButton
         self.State.CurrentTab = tabName
-        tabFrame.Visible = true
-        tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
+        self.Caches.ButtonYPos = self.Config.TabHeight + 10 -- Reset button Y position
+
+        -- Update CanvasSize to accommodate content
+        self.Caches.Frame.CanvasSize = UDim2.new(0, 0, 0, 600) -- Adjust as needed
     end
 
-    tabButton.MouseButton1Click:Connect(function()
-        if self.State.CurrentTab ~= tabName then
-            self.State.CurrentTab = tabName
-            -- Hide all tab frames
-            for _, frame in pairs(self.Caches.Tabs) do
-                frame.Visible = false
-            end
-            -- Show the selected tab frame
-            tabFrame.Visible = true
-            -- Update button colors
-            for _, btn in pairs(self.Caches.TabButtons) do
-                btn.BackgroundColor3 = self.Config.ButtonColor
-            end
-            tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
-        end
-    end)
-
-    -- Update CanvasSize of ScrollingFrame to ensure all content is accessible
-    local totalHeight = 0
-    for _, frame in pairs(self.Caches.Tabs) do
-        totalHeight = math.max(totalHeight, frame.AbsoluteSize.Y)
-    end
-    self.Caches.Frame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + self.Config.TabHeight)
-
-    return tabFrame
+    return self.Caches.Tabs[tabName]
 end
 
 function ZixyUILib:CreateButton(tabName, buttonText, position, callback)
@@ -231,9 +217,11 @@ function ZixyUILib:CreateButton(tabName, buttonText, position, callback)
         return nil
     end
 
+    -- Use provided position or dynamic vertical positioning
+    local buttonPosition = position or UDim2.new(0.5, -60, 0, self.Caches.ButtonYPos)
     local button = Instance.new("TextButton")
     button.Size = self.Config.ButtonSize
-    button.Position = position
+    button.Position = buttonPosition
     button.Text = buttonText
     button.BackgroundColor3 = self.Config.ButtonColor
     button.TextColor3 = self.Config.TextColor
@@ -248,6 +236,11 @@ function ZixyUILib:CreateButton(tabName, buttonText, position, callback)
     end
 
     table.insert(self.Caches.Elements, button)
+    if not position then
+        self.Caches.ButtonYPos = self.Caches.ButtonYPos + self.Config.ButtonSize.Y.Offset + self.Config.ButtonSpacing
+        -- Update CanvasSize to ensure all buttons are scrollable
+        self.Caches.Frame.CanvasSize = UDim2.new(0, 0, 0, math.max(self.Caches.Frame.CanvasSize.Y.Offset, self.Caches.ButtonYPos + 50))
+    end
     return button
 end
 
@@ -260,7 +253,7 @@ function ZixyUILib:CreateText(tabName, text, position)
 
     local textLabel = Instance.new("TextLabel")
     textLabel.Size = self.Config.TextSize
-    textLabel.Position = position
+    textLabel.Position = position or UDim2.new(0.5, -60, 0, self.Caches.ButtonYPos)
     textLabel.Text = text
     textLabel.BackgroundColor3 = self.Config.BackgroundColor
     textLabel.TextColor3 = self.Config.TextColor
@@ -271,6 +264,8 @@ function ZixyUILib:CreateText(tabName, text, position)
     addUICorner(textLabel)
 
     table.insert(self.Caches.Elements, textLabel)
+    self.Caches.ButtonYPos = self.Caches.ButtonYPos + self.Config.TextSize.Y.Offset + self.Config.ButtonSpacing
+    self.Caches.Frame.CanvasSize = UDim2.new(0, 0, 0, math.max(self.Caches.Frame.CanvasSize.Y.Offset, self.Caches.ButtonYPos + 50))
     return textLabel
 end
 
