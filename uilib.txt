@@ -190,7 +190,8 @@ function ZixyUILib:CreateTab(tabName)
     self.Caches.Tabs[tabName] = tabFrame
     self.Caches.TabButtons[tabName] = tabButton
 
-    if tabIndex == 1 then
+    -- Initialize the first tab if none is selected
+    if not self.State.CurrentTab then
         self.State.CurrentTab = tabName
         tabFrame.Visible = true
         tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
@@ -199,16 +200,26 @@ function ZixyUILib:CreateTab(tabName)
     tabButton.MouseButton1Click:Connect(function()
         if self.State.CurrentTab ~= tabName then
             self.State.CurrentTab = tabName
+            -- Hide all tab frames
             for _, frame in pairs(self.Caches.Tabs) do
                 frame.Visible = false
             end
+            -- Show the selected tab frame
             tabFrame.Visible = true
+            -- Update button colors
             for _, btn in pairs(self.Caches.TabButtons) do
                 btn.BackgroundColor3 = self.Config.ButtonColor
             end
             tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
         end
     end)
+
+    -- Update CanvasSize of ScrollingFrame to ensure all content is accessible
+    local totalHeight = 0
+    for _, frame in pairs(self.Caches.Tabs) do
+        totalHeight = math.max(totalHeight, frame.AbsoluteSize.Y)
+    end
+    self.Caches.Frame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + self.Config.TabHeight)
 
     return tabFrame
 end
