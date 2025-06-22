@@ -1,0 +1,274 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local ZixyUILib = {}
+ZixyUILib.__index = ZixyUILib
+
+ZixyUILib.Config = {
+    BackgroundColor = Color3.fromRGB(50, 50, 50),
+    TabContainerColor = Color3.fromRGB(30, 30, 30),
+    ButtonColor = Color3.fromRGB(80, 80, 80),
+    ActiveButtonColor = Color3.fromRGB(120, 120, 120),
+    TextColor = Color3.fromRGB(255, 255, 255),
+    CornerRadius = UDim.new(0, 10),
+    Font = Enum.Font.SourceSansBold,
+    ToggleKey = Enum.KeyCode.RightShift,
+    WindowSize = UDim2.new(0, 350, 0, 300),
+    TabHeight = 30,
+    ButtonSize = UDim2.new(0, 120, 0, 40),
+    TextSize = UDim2.new(0, 120, 0, 30),
+    ScrollBarThickness = 5,
+}
+
+ZixyUILib.State = {
+    IsOpen = false,
+    CurrentTab = nil,
+}
+
+ZixyUILib.Caches = {
+    Tabs = {},
+    TabButtons = {},
+    Elements = {},
+}
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local function addUICorner(instance)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = ZixyUILib.Config.CornerRadius
+    corner.Parent = instance
+end
+
+function ZixyUILib.new()
+    local self = setmetatable({}, ZixyUILib)
+    self.Caches.Tabs = {}
+    self.Caches.TabButtons = {}
+    self.Caches.Elements = {}
+    return self
+end
+
+function ZixyUILib:CreateWindow(title)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = title or "ZixyUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    screenGui.DisplayOrder = 1000
+    screenGui.Parent = playerGui
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 100, 0, 50)
+    toggleButton.Position = UDim2.new(0, 10, 0.5, -25)
+    toggleButton.Text = "Open UI"
+    toggleButton.BackgroundColor3 = self.Config.BackgroundColor
+    toggleButton.TextColor3 = self.Config.TextColor
+    toggleButton.Font = self.Config.Font
+    toggleButton.TextSize = 18
+    toggleButton.ZIndex = 1000
+    toggleButton.Parent = screenGui
+    addUICorner(toggleButton)
+
+    local frame = Instance.new("ScrollingFrame")
+    frame.Size = UDim2.new(0, 350, 0, 0) -- Start minimized
+    frame.Position = UDim2.new(0.5, -175, 0.5, -150)
+    frame.BackgroundColor3 = self.Config.BackgroundColor
+    frame.Visible = true
+    frame.CanvasSize = UDim2.new(0, 0, 0, 600)
+    frame.ScrollBarThickness = self.Config.ScrollBarThickness
+    frame.ZIndex = 1000
+    frame.Parent = screenGui
+    addUICorner(frame)
+
+    local tabContainer = Instance.new("Frame")
+    tabContainer.Size = UDim2.new(1, 0, 0, self.Config.TabHeight)
+    tabContainer.Position = UDim2.new(0, 0, 0, 0)
+    tabContainer.BackgroundColor3 = self.Config.TabContainerColor
+    tabContainer.ZIndex = 1001
+    tabContainer.Parent = frame
+    addUICorner(tabContainer)
+
+    self.Caches.ScreenGui = screenGui
+    self.Caches.ToggleButton = toggleButton
+    self.Caches.Frame = frame
+    self.Caches.TabContainer = tabContainer
+
+    local isDragging = false
+    local dragInput, dragStart, startPos
+
+    local function updateDrag(input)
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local isOverButton = false
+            for _, descendant in pairs(frame:GetDescendants()) do
+                if descendant:IsA("GuiButton") and descendant.Visible then
+                    local absPos = descendant.AbsolutePosition
+                    local absSize = descendant.AbsoluteSize
+                    local mousePos = input.Position
+                    if mousePos.X >= absPos.X and mousePos.X <= absPos.X + absSize.X and
+                       mousePos.Y >= absPos.Y and mousePos.Y <= absPos.Y + absSize.Y then
+                        isOverButton = true
+                        break
+                    end
+                end
+            end
+            if not isOverButton then
+                isDragging = true
+                dragStart = input.Position
+                startPos = frame.Position
+            end
+        end
+    end)
+
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isDragging = false
+            dragInput = nil
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+            if isDragging then
+                updateDrag(input)
+            end
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and isDragging then
+            updateDrag(input)
+        end
+    end)
+
+    local function toggleGui()
+        self.State.IsOpen = not self.State.IsOpen
+        toggleButton.Text = self.State.IsOpen and "Close UI" or "Open UI"
+        local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+        local goal = { Size = self.State.IsOpen and self.Config.WindowSize or UDim2.new(0, 350, 0, 0) }
+        TweenService:Create(frame, tweenInfo, goal):Play()
+    end
+
+    toggleButton.MouseButton1Click:Connect(toggleGui)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == self.Config.ToggleKey then
+            toggleGui()
+        end
+    end)
+
+    return self
+end
+
+function ZixyUILib:CreateTab(tabName)
+    local tabButton = Instance.new("TextButton")
+    local tabIndex = #self.Caches.Tabs + 1
+    tabButton.Size = UDim2.new(0, 58, 0, self.Config.TabHeight)
+    tabButton.Position = UDim2.new(0, (tabIndex-1)*58, 0, 0)
+    tabButton.Text = tabName
+    tabButton.BackgroundColor3 = self.Config.ButtonColor
+    tabButton.TextColor3 = self.Config.TextColor
+    tabButton.Font = self.Config.Font
+    tabButton.TextSize = 14
+    tabButton.ZIndex = 1002
+    tabButton.Parent = self.Caches.TabContainer
+    addUICorner(tabButton)
+
+    local tabFrame = Instance.new("Frame")
+    tabFrame.Size = UDim2.new(1, 0, 1, -self.Config.TabHeight)
+    tabFrame.Position = UDim2.new(0, 0, 0, self.Config.TabHeight)
+    tabFrame.BackgroundTransparency = 1
+    tabFrame.Visible = self.State.CurrentTab == nil and tabIndex == 1
+    tabFrame.ZIndex = 1001
+    tabFrame.Parent = self.Caches.Frame
+
+    self.Caches.Tabs[tabName] = tabFrame
+    self.Caches.TabButtons[tabName] = tabButton
+
+    if tabIndex == 1 then
+        self.State.CurrentTab = tabName
+        tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
+    end
+
+    tabButton.MouseButton1Click:Connect(function()
+        self.State.CurrentTab = tabName
+        for _, frame in pairs(self.Caches.Tabs) do
+            frame.Visible = false
+        end
+        tabFrame.Visible = true
+        for _, btn in pairs(self.Caches.TabButtons) do
+            btn.BackgroundColor3 = self.Config.ButtonColor
+        end
+        tabButton.BackgroundColor3 = self.Config.ActiveButtonColor
+    end)
+
+    return tabFrame
+end
+
+function ZixyUILib:CreateButton(tabName, buttonText, position, callback)
+    local tabFrame = self.Caches.Tabs[tabName]
+    if not tabFrame then
+        warn("Tab " .. tabName .. " does not exist")
+        return nil
+    end
+
+    local button = Instance.new("TextButton")
+    button.Size = self.Config.ButtonSize
+    button.Position = position
+    button.Text = buttonText
+    button.BackgroundColor3 = self.Config.ButtonColor
+    button.TextColor3 = self.Config.TextColor
+    button.Font = self.Config.Font
+    button.TextSize = 16
+    button.ZIndex = 1002
+    button.Parent = tabFrame
+    addUICorner(button)
+
+    if callback then
+        button.MouseButton1Click:Connect(callback)
+    end
+
+    table.insert(self.Caches.Elements, button)
+    return button
+end
+
+function ZixyUILib:CreateText(tabName, text, position)
+    local tabFrame = self.Caches.Tabs[tabName]
+    if not tabFrame then
+        warn("Tab " .. tabName .. " does not exist")
+        return nil
+    end
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = self.Config.TextSize
+    textLabel.Position = position
+    textLabel.Text = text
+    textLabel.BackgroundColor3 = self.Config.BackgroundColor
+    textLabel.TextColor3 = self.Config.TextColor
+    textLabel.Font = self.Config.Font
+    textLabel.TextSize = 14
+    textLabel.ZIndex = 1002
+    textLabel.Parent = tabFrame
+    addUICorner(textLabel)
+
+    table.insert(self.Caches.Elements, textLabel)
+    return textLabel
+end
+
+function ZixyUILib:Destroy()
+    if self.Caches.ScreenGui then
+        self.Caches.ScreenGui:Destroy()
+    end
+    self.Caches.Tabs = {}
+    self.Caches.TabButtons = {}
+    self.Caches.Elements = {}
+    self.State.IsOpen = false
+    self.State.CurrentTab = nil
+end
+
+return ZixyUILib
