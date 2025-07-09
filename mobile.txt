@@ -1,1 +1,97 @@
-loadstring(game:HttpGet("https://pandadevelopment.net/virtual/file/4439b24add397677"))()
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local api = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+api.script_id = "c5dee1b9a72300a9644171464a5351d1"
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.Name = "KeySystemGui"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 350, 0, 300)
+frame.Position = UDim2.new(0.5, -175, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Parent = screenGui
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(0, 200, 0, 50)
+titleLabel.Position = UDim2.new(0.5, -100, 0, 40)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Zixy X"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextSize = 32
+titleLabel.Parent = frame
+
+local keyTextBox = Instance.new("TextBox")
+keyTextBox.Size = UDim2.new(0, 200, 0, 40)
+keyTextBox.Position = UDim2.new(0.5, -100, 0, 100)
+keyTextBox.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+keyTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+keyTextBox.Font = Enum.Font.SourceSansBold
+keyTextBox.TextSize = 16
+keyTextBox.PlaceholderText = "Enter Key"
+keyTextBox.Text = ""
+keyTextBox.Parent = frame
+
+local verifyButton = Instance.new("TextButton")
+verifyButton.Size = UDim2.new(0, 120, 0, 40)
+verifyButton.Position = UDim2.new(0.5, -60, 0, 150)
+verifyButton.Text = "Verify"
+verifyButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+verifyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+verifyButton.Font = Enum.Font.SourceSansBold
+verifyButton.TextSize = 16
+verifyButton.Parent = frame
+
+local getKeyButton = Instance.new("TextButton")
+getKeyButton.Size = UDim2.new(0, 120, 0, 40)
+getKeyButton.Position = UDim2.new(0.5, -60, 0, 200)
+getKeyButton.Text = "Get Key"
+getKeyButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+getKeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+getKeyButton.Font = Enum.Font.SourceSansBold
+getKeyButton.TextSize = 16
+getKeyButton.Parent = frame
+
+local function addUICorner(instance)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = instance
+end
+
+addUICorner(frame)
+addUICorner(keyTextBox)
+addUICorner(verifyButton)
+addUICorner(getKeyButton)
+
+-- Button Logic
+verifyButton.MouseButton1Click:Connect(function()
+    local key = keyTextBox.Text
+    local status = api.check_key(key)
+
+    if (status.code == "KEY_VALID") then
+         screenGui:Destroy()
+        script_key = keyTextBox.Text
+        api.load_script();
+        return
+    elseif (status.code == "KEY_HWID_LOCKED") then
+        keyTextBox.Text = ""
+        keyTextBox.PlaceholderText = "Key HWID Locked"
+        return
+
+    else
+        keyTextBox.Text = ""
+        keyTextBox.PlaceholderText = "Invalid Key"
+        return
+    end
+end)
+
+getKeyButton.MouseButton1Click:Connect(function()
+    setclipboard("https://ads.luarmor.net/get_key?for=Zixy_X-ZwPSxFJIbjyo")
+    keyTextBox.PlaceholderText = "Copied key system!"
+end)
