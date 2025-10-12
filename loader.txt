@@ -8,14 +8,14 @@ local loader = Instance.new("ScreenGui", core_gui)
 
 local games = {
 	{ name = "Arsenal", link = "https://raw.githubusercontent.com/zixypy/zixyx/main/mobile.txt" },
-	{ name = "Big Paintball 2", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks1.txt" },
-	{ name = "Bombline", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks7.txt" },
-	{ name = "Rivals", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt" },
-	{ name = "Natural Disaster", link = "https://raw.githubusercontent.com/zixypy/scripts/main/naturaldisaster.txt" },
-	{ name = "Rush Point", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt" },
-	{ name = "Aimblox", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks4.txt" },
-	{ name = "Airsoft Battles", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks5.txt" },
-	{ name = "Gunfight Arena", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks6.txt" },
+	--{ name = "Big Paintball 2", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks1.txt" },
+	--{ name = "Bombline", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks7.txt" },
+	--{ name = "Rivals", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt" },
+	--{ name = "Natural Disaster", link = "https://raw.githubusercontent.com/zixypy/scripts/main/naturaldisaster.txt" },
+	--{ name = "Rush Point", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt" },
+	--{ name = "Aimblox", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks4.txt" },
+	--{ name = "Airsoft Battles", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks5.txt" },
+	--{ name = "Gunfight Arena", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks6.txt" },
 }
 
 local holder_stroke = Instance.new("UIStroke")
