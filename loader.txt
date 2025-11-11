@@ -139,10 +139,8 @@ do
 		
 		text_button.MouseButton1Click:Connect(function()
         
-			local success, result = pcall(function()
-            	loader:Destroy()
-				return loadstring(game:HttpGet(supported_game.link))()
-			end)
+			pcall(loader.Destroy, loader)
+			local success, result = pcall(loadstring(game:HttpGet(supported_game.link)))
 			if not success then
 				warn("Failed to execute script for " .. supported_game.name .. ": " .. result)
 			end
