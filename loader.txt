@@ -14,7 +14,7 @@ local games = {
 	--{ name = "Rivals", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks2.txt" },
 	--{ name = "Natural Disaster", link = "https://raw.githubusercontent.com/zixypy/scripts/main/naturaldisaster.txt" },
 	--{ name = "Rush Point", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks3.txt" },
-	--{ name = "Aimblox", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks4.txt" },
+	{ name = "Aimblox", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks4.txt" },
 	{ name = "Airsoft Battles", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks5.txt" },
 	--{ name = "Gunfight Arena", link = "https://raw.githubusercontent.com/zixypy/scripts/main/ks6.txt" },
 }
